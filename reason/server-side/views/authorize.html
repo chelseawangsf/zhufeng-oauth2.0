@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+</head>
+<body>
+<form method="post">
+    <input type="text" name="username">
+    <input type="text" name="password">
+    <input type="submit">
+    <%=appInfo.name%>将获得以下权限
+    <ul>
+        <li><input type="checkbox" name="apis" value="/name"> 获得用户名</li>
+        <li><input type="checkbox" name="apis" value="/age"> 获得用户年龄</li>
+    </ul>
+</form>
+
+</body>
+</html>
