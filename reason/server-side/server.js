@@ -55,7 +55,7 @@ app.post('/authorize', function (req, res) {
   //在服务器端保存此code以及应用的ID 用户ID
   CODES[code] = {
     client_id,
-    userId: oldUser.id,
+    openid: oldUser.id,
     apis,
     expire: new Date(Date.now() + 10 * 60 * 1000)//过期时间
   }
@@ -64,24 +64,29 @@ app.post('/authorize', function (req, res) {
 });
 let TOKENS = {};
 //通过code获取token
-app.get('/token', function (req, res) {
+app.get('/access_token', function (req, res) {
   let {code} = req.query;
   let codeInfo = CODES[code];
-  let token = uuid.v4();
+  let access_token = uuid.v4();
   //记录此token对应的应用ID和客户ID
-  TOKENS[token] = {
+  TOKENS[access_token] = {
     ...codeInfo,
     expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30 * 3)
   }
-  res.json({token});
+  res.json({access_token});
 });
+app.get('/me', function (req, res) {
+  let {access_token} = req.query;
+  let {openid} = TOKENS[access_token];
+  res.json({openid});
+});
+
 //根据token获取用户信息 头像 呢称
 app.get('/name', function (req, res) {
-  let {token} = req.query;
-  let {userId,apis} = TOKENS[token];
-  console.log(TOKENS);
+  let {access_token,openid} = req.query;
+  let {apis} = TOKENS[access_token];
   if(apis.indexOf('/name')!=-1){
-    let oldUser = USERS.find(item=>item.id == userId);
+    let oldUser = USERS.find(item=>item.id == openid);
     res.json({name:oldUser.username});
   }else{
     res.json({data:'用户没有授权'});
@@ -89,10 +94,10 @@ app.get('/name', function (req, res) {
 
 });
 app.get('/age', function (req, res) {
-  let {token} = req.query;
-  let {userId,apis} = TOKENS[token];
+  let {access_token,openid} = req.query;
+  let {apis} = TOKENS[access_token];
   if(apis.indexOf('/age')!=-1){
-    let oldUser = USERS.find(item=>item.id == userId);
+    let oldUser = USERS.find(item=>item.id == openid);
     res.json({age:oldUser.age});
   }else{
     res.json({data:'用户没有授权'});

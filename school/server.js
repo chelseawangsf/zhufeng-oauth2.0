@@ -14,14 +14,15 @@ app.use(session({
 }));
 app.listen(3000);
 let appInfo = {
-  appId: 'zhufengpeixun',//服务器生成的应用ID派发给应用
+  appId: 'appId',//服务器生成的应用ID派发给应用
   secret: '123456',//服务器生成的应用密钥派发给应用
-  name: "珠峰培训",
+  name: "珠峰大前端网校",
   desc: "中国知名前端培训机构",
-  redirect_uri: 'http://localhost:3000/callback'
+  redirect_uri: 'http://localhost:3000/callback',
+  scope:'get_user_info,list_album,upload_pic,do_like'
 }
 app.get('/login',function(req,res){
-  res.render('login',{url:`http://localhost:8000/authorize?clientId=${appInfo.appId}&redirect_uri=${appInfo.redirect_uri}`});
+  res.render('login',{url:`https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=${appInfo.appId}&redirect_uri=${appInfo.redirect_uri}&scope=${appInfo.scope}`});
 });
 /**
  * 应用的回调地址
@@ -31,24 +32,19 @@ app.get('/login',function(req,res){
 app.get('/callback', async function (req, res) {
   //客户端回调接口获取服务器办法的code
   let {code} = req.query;
-  let {access_token} = await fetch(`http://localhost:8000/access_token?code=${code}`);
+  let {access_token} = await fetch(`https://graph.qq.com/oauth2.0/token?grant_type=authorization_code&client_id=${appInfo.appId}&client_secret=${appInfo.secret}&code=${code}&state=state&redirect_uri=${appInfo.redirect_uri}`);
   req.session.access_token = access_token;
-  let {openid} = await fetch(`http://localhost:8000/me?access_token=${access_token}`);
+  let {openid} = await fetch(`https://graph.qq.com/oauth2.0/me?access_token=${access_token}`);
   req.session.openid = openid;
   res.json({access_token,openid});
 });
 
-app.get('/name', async function (req, res) {
+app.get('/get_user_info', async function (req, res) {
   let {access_token,openid}  = req.session;
-  let result = await fetch(`http://localhost:8000/name?access_token=${access_token}&openid=${openid}`);
+  let result = await fetch(`https://graph.qq.com/user/get_user_info?access_token=${access_token}&oauth_consumer_key=${appInfo.appId}&openid=${openid}`);
   res.json(result);
 });
 
-app.get('/age', async function (req, res) {
-  let {access_token,openid}  = req.session;
-  let result = await fetch(`http://localhost:8000/age?access_token=${access_token}&openid=${openid}`);
-  res.json(result);
-});
 
 async function fetch(url) {
   return new Promise(function (resolve, reject) {
